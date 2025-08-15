@@ -2,3 +2,4 @@ events.db
 __pycache__/
 *.pyc
 .env
+DISCORD_TOKEN.txt

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-# Discord Event Organizer Bot — SQLite 版（Railway-ready）
+# Discord Event Organizer Bot — 本機版（SQLite）
 # 功能：建立/加入/退出/顯示/列表/備註/提醒/指派或隨機負責人/刪除
-# 資料：SQLite（events 表，participants 以字串存於同表）
-# 注意：請在環境變數設定 DISCORD_TOKEN；DB_PATH 建議設 /data/events.db
+# 用法：先準備 DISCORD_TOKEN（環境變數或 DISCORD_TOKEN.txt 第一行），然後 python main.py
 
 import os
 import sqlite3
@@ -13,15 +12,29 @@ import discord
 from discord.ext import commands, tasks
 
 # =========================
+# Token 取得：環境變數優先，否則讀同層 DISCORD_TOKEN.txt 第一行
+# =========================
+def load_token() -> str | None:
+    token = os.getenv("DISCORD_TOKEN")
+    if token:
+        return token.strip()
+    try:
+        with open("DISCORD_TOKEN.txt", "r", encoding="utf-8") as f:
+            line = f.readline().strip()
+            return line or None
+    except FileNotFoundError:
+        return None
+
+TOKEN = load_token()
+
+# =========================
 # Config / Constants
 # =========================
-TOKEN = os.getenv("DISCORD_TOKEN")
-TAIPEI = timezone(timedelta(hours=8))             # 台北時區
-DB_PATH = os.getenv("DB_PATH", "events.db")       # Railway 建議：/data/events.db
+TAIPEI = timezone(timedelta(hours=8))          # 台北時區
+DB_PATH = os.getenv("DB_PATH", "events.db")    # 本機預設放在同層
 
-# Discord Intents（使用前綴指令需開啟 message_content）
 intents = discord.Intents.default()
-intents.message_content = True
+intents.message_content = True                 # 你使用前綴指令需要此 Intent（Portal 要開啟）
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # =========================
@@ -61,7 +74,7 @@ def init_db() -> tuple[sqlite3.Connection, sqlite3.Cursor]:
     cur = conn.cursor()
     cur.executescript(SCHEMA_SQL)
     conn.commit()
-    # 舊版兼容：確保欄位存在（多次呼叫安全）
+    # 舊版兼容（多次呼叫安全）
     ensure_column(conn, "channel_id",     "ALTER TABLE events ADD COLUMN channel_id INTEGER")
     ensure_column(conn, "location",       "ALTER TABLE events ADD COLUMN location TEXT")
     ensure_column(conn, "event_time_utc", "ALTER TABLE events ADD COLUMN event_time_utc TEXT")
@@ -331,5 +344,5 @@ async def delete_event(ctx, event_id: int, confirm: str | None = None):
 # =========================
 if __name__ == "__main__":
     if not TOKEN:
-        raise RuntimeError("請在環境變數設定 DISCORD_TOKEN")
+        raise RuntimeError("請設定環境變數 DISCORD_TOKEN，或在同層放 DISCORD_TOKEN.txt（第一行為 token）")
     bot.run(TOKEN)
