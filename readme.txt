@@ -9,7 +9,7 @@
 4.放 Token（二擇一）
 環境變數：
 Windows PowerShell：setx DISCORD_TOKEN "你的BotToken"
-或者，文字檔：在專案同層建立 DISCORD_TOKEN.txt，第一行貼上 token。
+然後，創文字檔：在專案同層建立 DISCORD_TOKEN.txt，第一行貼上 token。
 
 6.執行：python main.py
 
